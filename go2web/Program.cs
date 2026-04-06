@@ -29,7 +29,7 @@ if (args[0] == "-u")
     }
 
     string url = args[1];
-    var response = await go2web.HttpClient.GetAsync(url);
+    var response = await go2web.TcpHttpClient.GetAsync(url);
     string contentType = response.Headers.GetValueOrDefault("Content-Type", "text/html");
     string rendered = HtmlRenderer.Render(response.Body, contentType);
     Console.WriteLine(rendered);
@@ -46,7 +46,26 @@ if (args[0] == "-s")
     }
 
     string searchTerm = string.Join(" ", args[1..]);
-    Console.WriteLine($"[stub] Searching for: {searchTerm}");
+    Console.WriteLine($"Searching for: {searchTerm}\n");
+
+    var results = await SearchEngine.SearchAsync(searchTerm);
+
+    if (results.Count == 0)
+    {
+        Console.WriteLine("No results found.");
+        return;
+    }
+
+    for (int i = 0; i < results.Count; i++)
+    {
+        var r = results[i];
+        Console.WriteLine($"{i + 1,2}. {r.Title}");
+        Console.WriteLine($"    {r.Url}");
+        if (!string.IsNullOrWhiteSpace(r.Snippet))
+            Console.WriteLine($"    {r.Snippet}");
+        Console.WriteLine();
+    }
+
     return;
 }
 
