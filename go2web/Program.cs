@@ -29,7 +29,11 @@ if (args[0] == "-u")
     }
 
     string url = args[1];
-    var response = await go2web.TcpHttpClient.GetAsync(url);
+    var response = await TcpHttpClient.GetAsync(url);
+    
+    if (response.FromCache)
+        Console.Error.WriteLine("[cached]");
+    
     string contentType = response.Headers.GetValueOrDefault("Content-Type", "text/html");
     string rendered = HtmlRenderer.Render(response.Body, contentType);
     Console.WriteLine(rendered);
@@ -103,6 +107,12 @@ if (args[0] == "-s")
         }
     }
 
+    return;
+}
+
+if (args[0] == "--clear-cache")
+{
+    HttpCache.Clear();
     return;
 }
 
