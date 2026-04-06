@@ -33,7 +33,7 @@ public static class HtmlRenderer
 
         // Remove script, style, head tags entirely — we don't want their content
         var nodesToRemove = doc.DocumentNode
-            .SelectNodes("//script|//style|//head") ?? new HtmlNodeCollection(null);
+            .SelectNodes("//script|//style|//head") ?? new HtmlNodeCollection(doc.DocumentNode);
 
         foreach (var node in nodesToRemove.ToList())
         {
