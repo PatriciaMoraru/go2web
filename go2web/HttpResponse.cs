@@ -7,4 +7,5 @@ public class HttpResponse
     public Dictionary<string, string> Headers { get; set; } = new();
     public string Body { get; set; } = "";
     public string RawResponse { get; set; } = "";
+    public bool FromCache { get; set; } = false;
 }
