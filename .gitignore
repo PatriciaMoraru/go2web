@@ -60,3 +60,6 @@ artifacts/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+## Publish output
+**/publish/
