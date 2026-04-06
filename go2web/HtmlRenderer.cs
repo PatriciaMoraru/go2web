@@ -32,8 +32,10 @@ public static class HtmlRenderer
         doc.LoadHtml(html);
 
         // Remove script, style, head tags entirely — we don't want their content
-        foreach (var node in doc.DocumentNode
-                     .SelectNodes("//script|//style|//head") ?? [])
+        var nodesToRemove = doc.DocumentNode
+            .SelectNodes("//script|//style|//head") ?? new HtmlNodeCollection(null);
+
+        foreach (var node in nodesToRemove.ToList())
         {
             node.Remove();
         }
@@ -75,7 +77,7 @@ public static class HtmlRenderer
                 // Links — show URL after text
                 if (tag == "a")
                 {
-                    string? href = node.GetAttributeValue("href", null);
+                    string href = node.GetAttributeValue("href", "");
                     foreach (var child in node.ChildNodes)
                         RenderNode(child, sb);
                     if (!string.IsNullOrWhiteSpace(href))
