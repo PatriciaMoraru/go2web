@@ -1,4 +1,6 @@
-﻿const string help = """
+﻿using go2web;
+
+const string help = """
                     go2web - a simple HTTP client
 
                     Usage:
@@ -28,11 +30,9 @@ if (args[0] == "-u")
 
     string url = args[1];
     var response = await go2web.HttpClient.GetAsync(url);
-    
-    Console.WriteLine($"Status: {response.StatusCode} {response.StatusMessage}");
-    Console.WriteLine($"Content-Type: {response.Headers.GetValueOrDefault("Content-Type", "unknown")}");
-    Console.WriteLine(new string('-', 40));
-    Console.WriteLine(response.Body);
+    string contentType = response.Headers.GetValueOrDefault("Content-Type", "text/html");
+    string rendered = HtmlRenderer.Render(response.Body, contentType);
+    Console.WriteLine(rendered);
     return;
 }
 
