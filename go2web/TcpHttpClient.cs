@@ -4,7 +4,7 @@ using System.Text;
 
 namespace go2web;
 
-public static class HttpClient
+public static class TcpHttpClient
 {
     private const int MaxRedirects = 10;
 
