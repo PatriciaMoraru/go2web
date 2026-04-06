@@ -56,6 +56,7 @@ if (args[0] == "-s")
         return;
     }
 
+    // Display numbered results
     for (int i = 0; i < results.Count; i++)
     {
         var r = results[i];
@@ -64,6 +65,42 @@ if (args[0] == "-s")
         if (!string.IsNullOrWhiteSpace(r.Snippet))
             Console.WriteLine($"    {r.Snippet}");
         Console.WriteLine();
+    }
+
+    // Let the user pick a result to open
+    while (true)
+    {
+        Console.Write("Open result (1-10) or q to quit: ");
+        string? input = Console.ReadLine()?.Trim();
+
+        if (input is null or "q" or "Q")
+            break;
+
+        if (int.TryParse(input, out int choice) &&
+            choice >= 1 && choice <= results.Count)
+        {
+            string selectedUrl = results[choice - 1].Url;
+            Console.WriteLine($"\nFetching: {selectedUrl}\n");
+
+            var response = await TcpHttpClient.GetAsync(selectedUrl);
+            string contentType = response.Headers.GetValueOrDefault("Content-Type", "text/html");
+            string rendered = HtmlRenderer.Render(response.Body, contentType);
+            Console.WriteLine(rendered);
+
+            // After showing the page, ask again
+            Console.WriteLine("\n--- Back to results ---\n");
+            for (int i = 0; i < results.Count; i++)
+            {
+                var r = results[i];
+                Console.WriteLine($"{i + 1,2}. {r.Title}");
+                Console.WriteLine($"    {r.Url}");
+                Console.WriteLine();
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Please enter a number between 1 and {results.Count}, or q to quit.");
+        }
     }
 
     return;
