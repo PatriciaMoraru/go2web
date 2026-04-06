@@ -8,14 +8,13 @@ public static class TcpHttpClient
 {
     private const int MaxRedirects = 10;
 
-    public static async Task<HttpResponse> GetAsync(string url)
+    public static async Task<HttpResponse> GetAsync(string url, bool useCache = true)
     {
-        return await GetAsync(url, 0);
+        return await GetAsync(url, 0, useCache);
     }
 
-    private static async Task<HttpResponse> GetAsync(string url, int redirectCount)
+    private static async Task<HttpResponse> GetAsync(string url, int redirectCount, bool useCache = true)
     {
-        // --- Guard against infinite redirect loops ---
         if (redirectCount > MaxRedirects)
         {
             Console.Error.WriteLine($"Error: too many redirects (>{MaxRedirects})");
@@ -24,6 +23,13 @@ public static class TcpHttpClient
 
         if (!url.StartsWith("http://") && !url.StartsWith("https://"))
             url = "https://" + url;
+
+        // --- Cache check (only on first request, not redirects) ---
+        if (useCache && redirectCount == 0)
+        {
+            var cached = HttpCache.Get(url);
+            if (cached != null) return cached;
+        }
 
         var uri = new Uri(url);
         string host = uri.Host;
@@ -63,7 +69,7 @@ public static class TcpHttpClient
 
         var response = HttpResponseParser.Parse(responseBytes);
 
-        // --- Handle redirects ---
+        // --- Follow redirects ---
         if (response.StatusCode is 301 or 302 or 303 or 307 or 308)
         {
             if (!response.Headers.TryGetValue("Location", out string? location) ||
@@ -73,32 +79,29 @@ public static class TcpHttpClient
                 Environment.Exit(1);
             }
 
-            // Location can be relative (e.g. "/new-path") or absolute ("https://other.com")
             string nextUrl = BuildRedirectUrl(url, location);
-
             Console.Error.WriteLine($"  → {response.StatusCode} redirect to {nextUrl}");
-            return await GetAsync(nextUrl, redirectCount + 1);
+            return await GetAsync(nextUrl, redirectCount + 1, useCache);
         }
+
+        // --- Cache successful responses only ---
+        if (useCache && response.StatusCode == 200)
+            HttpCache.Set(url, response);
 
         return response;
     }
 
-    // Resolves a redirect Location against the original URL.
-    // Handles absolute URLs, protocol-relative URLs, and relative paths.
     private static string BuildRedirectUrl(string originalUrl, string location)
     {
-        // Absolute URL — use as-is
         if (location.StartsWith("http://") || location.StartsWith("https://"))
             return location;
 
-        // Protocol-relative — e.g. "//example.com/path"
         if (location.StartsWith("//"))
         {
             var original = new Uri(originalUrl);
             return original.Scheme + ":" + location;
         }
 
-        // Relative path — resolve against original base
         var baseUri = new Uri(originalUrl);
         var resolved = new Uri(baseUri, location);
         return resolved.ToString();
