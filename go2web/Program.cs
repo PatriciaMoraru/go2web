@@ -27,8 +27,8 @@ if (args[0] == "-u")
     }
 
     string url = args[1];
-    Console.WriteLine($"[stub] Fetching URL: {url}");
-    // TODO: will be replaced in Step 2
+    var response = await go2web.HttpClient.GetAsync(url);
+    Console.WriteLine(response.Body);
     return;
 }
 
@@ -43,7 +43,6 @@ if (args[0] == "-s")
 
     string searchTerm = string.Join(" ", args[1..]);
     Console.WriteLine($"[stub] Searching for: {searchTerm}");
-    // TODO: will be replaced in Step 6
     return;
 }
 
