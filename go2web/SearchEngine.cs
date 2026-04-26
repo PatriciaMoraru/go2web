@@ -64,32 +64,43 @@ public static class SearchEngine
         return results;
     }
 
-    // DuckDuckGo uses protocol-relative redirect URLs like:
-    // //duckduckgo.com/l/?uddg=https%3A%2F%2Factualsite.com&rut=...
+    // DuckDuckGo wraps result URLs in a redirect: /l/?uddg=<encoded-real-url>
+    // This handles absolute, protocol-relative, and path-relative hrefs uniformly.
     private static string UnwrapDuckDuckGoUrl(string href)
     {
-        if (string.IsNullOrWhiteSpace(href)) return "";
+        if (string.IsNullOrWhiteSpace(href))
+            return "";
 
-        // Already absolute
-        if (href.StartsWith("http://") || href.StartsWith("https://"))
-            return href;
+        string absolute;
 
-        // Protocol-relative DDG redirect — prepend https: to parse it
-        string absolute = href.StartsWith("//") ? "https:" + href : "https://duckduckgo.com" + href;
+        if (href.StartsWith("//"))
+            absolute = "https:" + href;
+        else if (href.StartsWith("/"))
+            absolute = "https://duckduckgo.com" + href;
+        else if (href.StartsWith("http://") || href.StartsWith("https://"))
+            absolute = href;
+        else
+            return "";
 
         if (Uri.TryCreate(absolute, UriKind.Absolute, out var uri))
         {
-            // Extract uddg param which holds the real URL
+            // Try to extract the real URL from the uddg query param
             string query = uri.Query.TrimStart('?');
             foreach (var param in query.Split('&'))
             {
                 int eq = param.IndexOf('=');
                 if (eq == -1) continue;
+
                 string key = param[..eq];
                 string value = HttpUtility.UrlDecode(param[(eq + 1)..]);
+
                 if (key == "uddg" && !string.IsNullOrWhiteSpace(value))
                     return value;
             }
+
+            // Not a DDG redirect — keep the URL only if it points elsewhere
+            if (!uri.Host.Contains("duckduckgo.com"))
+                return absolute;
         }
 
         return "";
