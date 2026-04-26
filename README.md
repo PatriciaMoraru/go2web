@@ -2,6 +2,10 @@
 
 A command-line HTTP client built over raw TCP sockets in C#. No HTTP libraries used.
 
+## Demo
+
+![demo](demo.gif)
+
 ## Usage
 
 ```
